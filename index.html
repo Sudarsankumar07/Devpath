@@ -887,16 +887,28 @@ function renderReminders() {
 }
 
 function addReminder() {
-  const title = document.getElementById('rem-title').value.trim();
-  const time = document.getElementById('rem-time').value;
-  const repeat = document.getElementById('rem-repeat').value;
-  if (!title) { showToast('Please enter a reminder title'); return; }
+  const title = document.getElementById("rem-title").value.trim();
+  const time = document.getElementById("rem-time").value;
+  const repeat = document.getElementById("rem-repeat").value;
+  if (!title) { showToast("Please enter a reminder title"); return; }
+  if (!time) { showToast("Please select a time"); return; }
   state.reminders.push({ title, time, repeat });
   state.reminders.sort((a, b) => a.time.localeCompare(b.time));
   saveState();
-  document.getElementById('rem-title').value = '';
+  document.getElementById("rem-title").value = "";
   renderReminders();
-  showToast('Reminder saved! ⏰');
+  showToast("Reminder saved! ⏰");
+
+  if (Notification.permission === "default") {
+    Notification.requestPermission().then(p => {
+      if (p === "granted") { startReminderChecker(); showToast("Notifications enabled! ✅"); }
+      else showToast("Allow notifications so reminders can fire!");
+    });
+  } else if (Notification.permission === "granted") {
+    startReminderChecker();
+  } else {
+    showToast("Enable notifications in browser settings to receive reminders");
+  }
 }
 
 function deleteReminder(i) {
@@ -942,8 +954,10 @@ function renderProgress() {
 }
 
 function loadSettings() {
-  document.getElementById('settings-name').value = state.name || 'Sudarsan';
-  document.getElementById('settings-goal').value = state.goal || 3;
+  document.getElementById("settings-name").value = state.name || "Sudarsan";
+  document.getElementById("settings-goal").value = state.goal || 3;
+  const toggle = document.getElementById("notif-toggle");
+  if (toggle) toggle.checked = Notification.permission === "granted";
 }
 
 function saveSettings() {
@@ -977,9 +991,61 @@ function requestNotifications(el) {
   if (el.checked) {
     Notification.requestPermission().then(p => {
       if (p !== 'granted') { el.checked = false; showToast('Notification permission denied'); }
-      else showToast('Notifications enabled! ✅');
+      else { showToast('Notifications enabled! ✅'); startReminderChecker(); }
     });
+  } else {
+    stopReminderChecker();
   }
+}
+
+let reminderInterval = null;
+let firedToday = {};
+
+function startReminderChecker() {
+  if (reminderInterval) return;
+  reminderInterval = setInterval(checkReminders, 30000);
+  checkReminders();
+}
+
+function stopReminderChecker() {
+  clearInterval(reminderInterval);
+  reminderInterval = null;
+}
+
+function checkReminders() {
+  if (!state.reminders.length) return;
+  if (Notification.permission !== "granted") return;
+
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const currentTime = hh + ":" + mm;
+  const todayKey = now.toDateString();
+
+  state.reminders.forEach((r, i) => {
+    const fireKey = todayKey + "_" + i;
+    if (r.time === currentTime && !firedToday[fireKey]) {
+      firedToday[fireKey] = true;
+      new Notification("DevPath Reminder ⚡", {
+        body: r.title,
+        icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>⚡</text></svg>"
+      });
+    }
+  });
+
+  // Clear firedToday keys from previous days
+  Object.keys(firedToday).forEach(k => {
+    if (!k.startsWith(todayKey)) delete firedToday[k];
+  });
+}
+
+// Auto start checker if permission already granted
+if (Notification.permission === "granted") {
+  startReminderChecker();
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggle = document.getElementById("notif-toggle");
+    if (toggle) toggle.checked = true;
+  });
 }
 
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
