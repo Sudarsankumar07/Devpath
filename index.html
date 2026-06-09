@@ -387,7 +387,7 @@
   <!-- REMINDERS -->
   <div class="page" id="page-reminders">
     <div class="page-title">Reminders</div>
-    <div class="page-sub">Set daily study reminders</div>
+    <div class="page-sub">Set daily study reminders &nbsp;·&nbsp; <span id="live-clock" style="color:var(--primary);font-weight:600"></span></div>
 
     <div class="grid-2">
       <div>
@@ -410,6 +410,7 @@
             </select>
           </div>
           <button class="btn btn-primary w-full" onclick="addReminder()">Save Reminder</button>
+          <button class="btn btn-outline w-full" style="margin-top:10px" onclick="testNotification()">🔔 Test Notification</button>
         </div>
         <div class="card" style="background:rgba(59,130,246,.05); border-color:rgba(59,130,246,.2)">
           <div class="text-xs text-primary font-bold mb-8">📱 PWA Install Tip</div>
@@ -886,6 +887,26 @@ function renderReminders() {
   }).join('');
 }
 
+function testNotification() {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission().then(p => {
+      if (p === "granted") { startReminderChecker(); fireTestNotif(); }
+      else showToast("Notifications blocked. Enable in Chrome site settings.");
+    });
+    return;
+  }
+  fireTestNotif();
+}
+
+function fireTestNotif() {
+  try {
+    new Notification("DevPath ⚡", { body: "Reminders are working!" });
+    showToast("Test notification sent!");
+  } catch(e) {
+    showToast("Error: " + e.message);
+  }
+}
+
 function addReminder() {
   const title = document.getElementById("rem-title").value.trim();
   const time = document.getElementById("rem-time").value;
@@ -1002,8 +1023,8 @@ let reminderInterval = null;
 let firedToday = {};
 
 function startReminderChecker() {
-  if (reminderInterval) return;
-  reminderInterval = setInterval(checkReminders, 30000);
+  if (reminderInterval) clearInterval(reminderInterval);
+  reminderInterval = setInterval(checkReminders, 10000);
   checkReminders();
 }
 
@@ -1023,29 +1044,29 @@ function checkReminders() {
   const todayKey = now.toDateString();
 
   state.reminders.forEach((r, i) => {
-    const fireKey = todayKey + "_" + i;
-    if (r.time === currentTime && !firedToday[fireKey]) {
+    const fireKey = todayKey + "_" + i + "_" + r.time;
+    const storedTime = r.time.trim();
+    if (storedTime === currentTime && !firedToday[fireKey]) {
       firedToday[fireKey] = true;
-      new Notification("DevPath Reminder ⚡", {
-        body: r.title,
-        icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><text y='52' font-size='52'>⚡</text></svg>"
-      });
+      try {
+        new Notification("DevPath ⚡", {
+          body: r.title,
+          icon: "https://api.iconify.design/twemoji:lightning.svg"
+        });
+      } catch(e) {
+        showToast("Reminder: " + r.title);
+      }
     }
   });
 
-  // Clear firedToday keys from previous days
   Object.keys(firedToday).forEach(k => {
-    if (!k.startsWith(todayKey)) delete firedToday[k];
+    if (!k.includes(todayKey)) delete firedToday[k];
   });
 }
 
-// Auto start checker if permission already granted
+// Auto start on load if already granted
 if (Notification.permission === "granted") {
   startReminderChecker();
-  document.addEventListener("DOMContentLoaded", () => {
-    const toggle = document.getElementById("notif-toggle");
-    if (toggle) toggle.checked = true;
-  });
 }
 
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
@@ -1190,6 +1211,14 @@ function closeSidebarMobile() {
 
 updateStreak();
 renderDashboard();
+
+// Live clock
+setInterval(() => {
+  const el = document.getElementById("live-clock");
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}, 1000);
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').catch(() => {});
