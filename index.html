@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F172A">
+<meta name="description" content="DevPath - JavaScript to React to TypeScript Learning Companion">
+<link rel="manifest" href="manifest.json">
+<title>DevPath</title>
+<style>
+  :root {
+    --bg: #0F172A;
+    --card: #1E293B;
+    --card2: #253347;
+    --primary: #3B82F6;
+    --primary-dim: #1D4ED8;
+    --success: #22C55E;
+    --danger: #EF4444;
+    --warn: #F59E0B;
+    --text: #F8FAFC;
+    --muted: #94A3B8;
+    --border: #334155;
+    --sidebar-w: 220px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; display: flex; min-height: 100vh; overflow-x: hidden; }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w); background: var(--card); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100;
+    transition: transform .3s;
+  }
+  #sidebar .logo { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
+  #sidebar .logo h1 { font-size: 1.3rem; font-weight: 700; color: var(--primary); letter-spacing: -.5px; }
+  #sidebar .logo p { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+  #sidebar nav { flex: 1; padding: 12px 0; }
+  #sidebar nav a {
+    display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+    color: var(--muted); text-decoration: none; font-size: .875rem; cursor: pointer;
+    transition: background .2s, color .2s; border-left: 3px solid transparent;
+  }
+  #sidebar nav a:hover { background: rgba(59,130,246,.08); color: var(--text); }
+  #sidebar nav a.active { color: var(--primary); background: rgba(59,130,246,.1); border-left-color: var(--primary); }
+  #sidebar nav a .icon { width: 18px; text-align: center; font-size: 1rem; }
+  #sidebar .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+  #sidebar .sidebar-footer span { font-size: .75rem; color: var(--muted); }
+
+  /* MAIN */
+  #main { margin-left: var(--sidebar-w); flex: 1; padding: 28px; min-height: 100vh; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+  .page-sub { color: var(--muted); font-size: .875rem; margin-bottom: 24px; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-sm { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+  /* PROGRESS BAR */
+  .prog-bar { background: var(--border); border-radius: 99px; height: 8px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; background: var(--primary); transition: width .5s; }
+  .prog-fill.green { background: var(--success); }
+
+  /* PROGRESS RING */
+  .ring-wrap { display: flex; justify-content: center; margin: 8px 0 20px; }
+  .ring-svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .ring-fg { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset .8s ease; }
+  .ring-label { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring-container { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* DASHBOARD STATS */
+  .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat-box { flex: 1; min-width: 110px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .stat-box .s-val { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+  .stat-box .s-lbl { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+  /* DAY CARDS */
+  .day-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; cursor: pointer; transition: border-color .2s, transform .2s; }
+  .day-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .day-card .dc-day { font-size: .72rem; color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+  .day-card .dc-title { font-size: 1rem; font-weight: 600; margin-bottom: 10px; }
+  .day-card .dc-meta { font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+  .day-card .dc-pct { font-size: .8rem; color: var(--success); font-weight: 600; }
+  .day-card .btn-open { margin-top: 14px; background: rgba(59,130,246,.15); color: var(--primary); border: 1px solid rgba(59,130,246,.3); padding: 7px 14px; border-radius: 7px; font-size: .8rem; cursor: pointer; transition: background .2s; }
+  .day-card .btn-open:hover { background: rgba(59,130,246,.3); }
+
+  /* TOPIC LIST */
+  .topic-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 8px; cursor: pointer; transition: background .2s; border: 1px solid transparent; }
+  .topic-item:hover { background: var(--card2); }
+  .topic-item.done .t-check { background: var(--success); border-color: var(--success); color: white; }
+  .topic-item .t-check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: .7rem; flex-shrink: 0; transition: all .2s; }
+  .topic-item .t-name { flex: 1; font-size: .9rem; }
+  .topic-item.done .t-name { text-decoration: line-through; color: var(--muted); }
+  .topic-item .t-arrow { color: var(--muted); font-size: .8rem; }
+
+  /* BUTTONS */
+  .btn { padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-size: .875rem; font-weight: 500; transition: opacity .2s; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover { opacity: .85; }
+  .btn-success { background: var(--success); color: white; }
+  .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+  .btn-danger { background: var(--danger); color: white; }
+
+  /* TOPIC DETAIL */
+  #topic-detail { display: none; }
+  #topic-detail.active { display: block; }
+  .back-btn { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: .875rem; cursor: pointer; margin-bottom: 20px; padding: 6px 0; }
+  .back-btn:hover { color: var(--text); }
+
+  /* MARKDOWN VIEWER */
+  .md-content { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; line-height: 1.75; }
+  .md-content h1 { font-size: 1.4rem; margin-bottom: 12px; color: var(--primary); }
+  .md-content h2 { font-size: 1.15rem; margin: 20px 0 8px; color: var(--text); }
+  .md-content h3 { font-size: 1rem; margin: 16px 0 6px; color: var(--warn); }
+  .md-content p { color: var(--muted); margin-bottom: 10px; font-size: .9rem; }
+  .md-content code { background: #0D1926; color: #7DD3FC; padding: 2px 6px; border-radius: 4px; font-size: .82rem; font-family: 'Cascadia Code', 'Fira Code', monospace; }
+  .md-content pre { background: #0D1926; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 10px 0; overflow-x: auto; }
+  .md-content pre code { background: none; padding: 0; font-size: .83rem; color: #7DD3FC; }
+  .md-content ul, .md-content ol { padding-left: 20px; color: var(--muted); font-size: .9rem; }
+  .md-content li { margin-bottom: 4px; }
+  .md-content strong { color: var(--text); }
+
+  /* NOTES PAGE */
+  .note-card { display: flex; align-items: center; gap: 14px; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .2s; }
+  .note-card:hover { border-color: var(--primary); }
+  .note-card .n-icon { font-size: 1.4rem; width: 40px; height: 40px; background: rgba(59,130,246,.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .note-card .n-title { font-weight: 600; font-size: .9rem; }
+  .note-card .n-desc { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+  /* REMINDERS */
+  .reminder-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+  .reminder-item .r-time { font-size: 1.1rem; font-weight: 700; color: var(--primary); min-width: 60px; }
+  .reminder-item .r-title { font-size: .9rem; font-weight: 500; }
+  .reminder-item .r-repeat { font-size: .75rem; color: var(--muted); }
+  .reminder-item .r-del { margin-left: auto; background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+  .form-group input, .form-group select {
+    width: 100%; background: var(--card2); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 12px; border-radius: 8px; font-size: .875rem; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+
+  /* PROGRESS PAGE */
+  .lang-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .lang-name { width: 100px; font-size: .875rem; }
+  .lang-bar { flex: 1; }
+  .lang-pct { width: 40px; text-align: right; font-size: .875rem; color: var(--muted); }
+  .streak-big { font-size: 3rem; font-weight: 800; color: var(--warn); }
+
+  /* SETTINGS */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-row .s-title { font-size: .875rem; font-weight: 500; }
+  .setting-row .s-desc { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+  .toggle { position: relative; width: 44px; height: 24px; }
+  .toggle input { display: none; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 99px; cursor: pointer; transition: background .2s; }
+  .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform .2s; }
+  .toggle input:checked + .toggle-slider { background: var(--primary); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  /* AI CHATBOT */
+  #chat-fab { position: fixed; bottom: 24px; right: 24px; width: 52px; height: 52px; background: var(--primary); border: none; border-radius: 50%; font-size: 1.4rem; cursor: pointer; z-index: 1000; box-shadow: 0 4px 20px rgba(59,130,246,.5); transition: transform .2s; display: flex; align-items: center; justify-content: center; }
+  #chat-fab:hover { transform: scale(1.08); }
+  #chat-panel {
+    position: fixed; bottom: 90px; right: 24px; width: 360px; height: 500px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    display: none; flex-direction: column; z-index: 999; box-shadow: 0 8px 40px rgba(0,0,0,.5);
+    overflow: hidden;
+  }
+  #chat-panel.open { display: flex; }
+  .chat-header { padding: 14px 16px; background: var(--card2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .chat-header .ai-dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; }
+  .chat-header .ai-name { font-weight: 600; font-size: .9rem; }
+  .chat-header .ai-model { font-size: .72rem; color: var(--muted); }
+  .chat-header .close-chat { margin-left: auto; background: none; border: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+  #chat-messages { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  #chat-messages::-webkit-scrollbar { width: 4px; }
+  #chat-messages::-webkit-scrollbar-track { background: transparent; }
+  #chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  .msg { max-width: 85%; padding: 10px 13px; border-radius: 12px; font-size: .845rem; line-height: 1.5; }
+  .msg.user { background: var(--primary); color: white; align-self: flex-end; border-bottom-right-radius: 3px; }
+  .msg.ai { background: var(--card2); color: var(--text); align-self: flex-start; border-bottom-left-radius: 3px; }
+  .msg.ai code { background: #0D1926; color: #7DD3FC; padding: 1px 5px; border-radius: 3px; font-size: .78rem; }
+  .msg.ai pre { background: #0D1926; padding: 10px; border-radius: 6px; margin: 6px 0; overflow-x: auto; }
+  .msg.ai pre code { background: none; padding: 0; }
+  .msg.typing { color: var(--muted); font-style: italic; }
+  .chat-input-row { padding: 12px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  #chat-input { flex: 1; background: var(--card2); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: .845rem; outline: none; resize: none; font-family: inherit; }
+  #chat-input:focus { border-color: var(--primary); }
+  #chat-send { background: var(--primary); color: white; border: none; border-radius: 8px; padding: 9px 14px; cursor: pointer; font-size: .9rem; transition: opacity .2s; }
+  #chat-send:hover { opacity: .85; }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; }
+  .chat-suggestions button { background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.25); color: var(--primary); padding: 5px 10px; border-radius: 20px; font-size: .75rem; cursor: pointer; transition: background .2s; }
+  .chat-suggestions button:hover { background: rgba(59,130,246,.25); }
+
+  /* BADGE */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: .72rem; font-weight: 600; }
+  .badge-blue { background: rgba(59,130,246,.15); color: var(--primary); }
+  .badge-green { background: rgba(34,197,94,.15); color: var(--success); }
+  .badge-warn { background: rgba(245,158,11,.15); color: var(--warn); }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--card2); color: var(--text); padding: 10px 20px; border-radius: 8px; font-size: .875rem; border: 1px solid var(--border); transition: transform .3s; z-index: 2000; pointer-events: none; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* MOBILE HEADER */
+  #mob-header { display: none; background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 16px; position: fixed; top: 0; left: 0; right: 0; z-index: 90; align-items: center; justify-content: space-between; }
+  #mob-header h1 { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  #mob-toggle { background: none; border: none; color: var(--text); font-size: 1.3rem; cursor: pointer; }
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99; }
+
+  @media (max-width: 768px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #mob-header { display: flex; }
+    #overlay.show { display: block; }
+    #main { margin-left: 0; padding: 16px; padding-top: 72px; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    #chat-panel { width: calc(100vw - 32px); right: 16px; }
+    .stat-row { gap: 10px; }
+  }
+
+  .gap-12 { gap: 12px; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .mb-4 { margin-bottom: 4px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .text-sm { font-size: .875rem; }
+  .text-xs { font-size: .75rem; }
+  .text-muted { color: var(--muted); }
+  .text-primary { color: var(--primary); }
+  .text-success { color: var(--success); }
+  .font-bold { font-weight: 700; }
+  .w-full { width: 100%; }
+</style>
+</head>
+<body>
+
+<!-- MOBILE HEADER -->
+<div id="mob-header">
+  <h1>⚡ DevPath</h1>
+  <button id="mob-toggle" onclick="toggleSidebar()">☰</button>
+</div>
+<div id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="logo">
+    <h1>⚡ DevPath</h1>
+    <p>JS → React → TypeScript</p>
+  </div>
+  <nav>
+    <a class="active" onclick="navigate('dashboard')" data-page="dashboard"><span class="icon">🏠</span> Dashboard</a>
+    <a onclick="navigate('learning')" data-page="learning"><span class="icon">📚</span> Learning Path</a>
+    <a onclick="navigate('notes')" data-page="notes"><span class="icon">📖</span> Notes</a>
+    <a onclick="navigate('reminders')" data-page="reminders"><span class="icon">⏰</span> Reminders</a>
+    <a onclick="navigate('progress')" data-page="progress"><span class="icon">📊</span> Progress</a>
+    <a onclick="navigate('settings')" data-page="settings"><span class="icon">⚙️</span> Settings</a>
+  </nav>
+  <div class="sidebar-footer">
+    <span id="streak-footer">🔥 0 day streak</span>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main id="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Track your learning journey</div>
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="s-val" id="stat-topics">0</div><div class="s-lbl">Topics Done</div></div>
+      <div class="stat-box"><div class="s-val" id="stat-pct">0%</div><div class="s-lbl">Overall Progress</div></div>
+      <div class="stat-box"><div class="s-val" id="stat-streak">0</div><div class="s-lbl">Day Streak 🔥</div></div>
+      <div class="stat-box"><div class="s-val" id="stat-days">0</div><div class="s-lbl">Days Active</div></div>
+    </div>
+
+    <div class="grid-2 mb-20">
+      <div class="card">
+        <div class="text-sm font-bold mb-12">Overall Progress</div>
+        <div class="ring-wrap">
+          <div class="ring-container">
+            <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="52"/>
+              <circle class="ring-fg" id="ring-circle" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+            </svg>
+            <div class="ring-label">
+              <span id="ring-pct" style="font-size:1.5rem;font-weight:800">0%</span>
+              <span style="font-size:.7rem;color:var(--muted)">complete</span>
+            </div>
+          </div>
+        </div>
+        <div id="dash-day-bars"></div>
+      </div>
+
+      <div class="flex flex-col gap-12">
+        <div class="card">
+          <div class="text-xs text-muted mb-8">TODAY'S FOCUS</div>
+          <div id="today-topic" class="text-sm font-bold mb-12">—</div>
+          <button class="btn btn-primary w-full" onclick="navigate('learning')">Continue Learning →</button>
+        </div>
+        <div class="card">
+          <div class="text-xs text-muted mb-8">NEXT REMINDER</div>
+          <div id="next-reminder" class="text-sm font-bold">No reminders set</div>
+          <div id="next-reminder-title" class="text-xs text-muted mt-8"></div>
+        </div>
+        <div class="card">
+          <div class="text-xs text-muted mb-8">CURRENT DAY</div>
+          <div id="current-day-label" class="font-bold text-primary" style="font-size:1.1rem">Day 1</div>
+          <div class="text-xs text-muted mt-4" id="current-day-sub">JavaScript Core</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEARNING PATH -->
+  <div class="page" id="page-learning">
+    <div id="day-list-view">
+      <div class="page-title">Learning Path</div>
+      <div class="page-sub">5-day roadmap: JavaScript → React → TypeScript</div>
+      <div class="grid-2 mb-20" id="day-cards-grid"></div>
+    </div>
+
+    <div id="topic-detail">
+      <div class="back-btn" onclick="backToDayList()">← Back to Learning Path</div>
+      <div id="td-day-badge" class="badge badge-blue mb-8" style="display:inline-block"></div>
+      <div class="page-title" id="td-title" style="margin-bottom:4px"></div>
+      <div class="text-xs text-muted mb-16" id="td-progress-text"></div>
+      <div class="prog-bar mb-20"><div class="prog-fill" id="td-prog-fill" style="width:0%"></div></div>
+
+      <div id="topic-list-view">
+        <div id="td-topics-list" class="flex flex-col gap-12 mb-20"></div>
+      </div>
+
+      <div id="topic-content-view" style="display:none">
+        <div class="back-btn" onclick="backToTopics()">← Back to Topics</div>
+        <div class="flex items-center justify-between mb-16">
+          <div>
+            <div class="text-xs text-muted mb-4" id="tc-day-label"></div>
+            <div class="font-bold" style="font-size:1.1rem" id="tc-topic-name"></div>
+          </div>
+          <button class="btn btn-success" id="tc-mark-btn" onclick="markTopicDone()">✓ Mark Complete</button>
+        </div>
+        <div class="md-content" id="tc-content"></div>
+        <div class="flex gap-12 mt-16">
+          <button class="btn btn-outline" onclick="prevTopic()">← Prev</button>
+          <button class="btn btn-primary" onclick="nextTopic()" style="margin-left:auto">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="page" id="page-notes">
+    <div id="notes-list-view">
+      <div class="page-title">Notes</div>
+      <div class="page-sub">Study materials for each topic</div>
+      <div class="flex flex-col gap-12" id="notes-list"></div>
+    </div>
+    <div id="notes-detail-view" style="display:none">
+      <div class="back-btn" onclick="backToNotes()">← Back to Notes</div>
+      <div class="page-title mb-16" id="note-detail-title"></div>
+      <div class="md-content" id="note-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- REMINDERS -->
+  <div class="page" id="page-reminders">
+    <div class="page-title">Reminders</div>
+    <div class="page-sub">Set daily study reminders</div>
+
+    <div class="grid-2">
+      <div>
+        <div class="card mb-16">
+          <div class="font-bold mb-16">Add Reminder</div>
+          <div class="form-group">
+            <label>Title</label>
+            <input type="text" id="rem-title" placeholder="e.g. Study React Hooks">
+          </div>
+          <div class="form-group">
+            <label>Time</label>
+            <input type="time" id="rem-time" value="19:00">
+          </div>
+          <div class="form-group">
+            <label>Repeat</label>
+            <select id="rem-repeat">
+              <option>Daily</option>
+              <option>Weekdays</option>
+              <option>Once</option>
+            </select>
+          </div>
+          <button class="btn btn-primary w-full" onclick="addReminder()">Save Reminder</button>
+        </div>
+        <div class="card" style="background:rgba(59,130,246,.05); border-color:rgba(59,130,246,.2)">
+          <div class="text-xs text-primary font-bold mb-8">📱 PWA Install Tip</div>
+          <div class="text-xs text-muted" style="line-height:1.6">Install DevPath as a web app to receive browser notifications for your reminders. Click <strong style="color:var(--text)">Install App</strong> in Settings.</div>
+        </div>
+      </div>
+      <div>
+        <div class="font-bold mb-12">Scheduled Reminders</div>
+        <div id="reminders-list" class="flex flex-col gap-10"></div>
+        <div id="no-reminders" class="text-muted text-sm" style="display:none">No reminders yet. Add one!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="page" id="page-progress">
+    <div class="page-title">Progress</div>
+    <div class="page-sub">Your learning analytics</div>
+
+    <div class="grid-2 mb-20">
+      <div class="card">
+        <div class="font-bold mb-16">Topics by Technology</div>
+        <div id="lang-progress-bars"></div>
+      </div>
+      <div class="card text-center" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+        <div class="text-muted text-xs mb-8">LEARNING STREAK</div>
+        <div class="streak-big" id="streak-display">0</div>
+        <div class="text-sm text-muted mt-4">Days in a row 🔥</div>
+        <div class="text-xs text-muted mt-12" id="streak-msg">Start learning to build your streak!</div>
+      </div>
+    </div>
+
+    <div class="card mb-16">
+      <div class="font-bold mb-16">Day-by-Day Progress</div>
+      <div id="day-progress-detail"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="page-title">Settings</div>
+    <div class="page-sub">Customize your experience</div>
+
+    <div class="card mb-16">
+      <div class="setting-row">
+        <div>
+          <div class="s-title">Install as Web App (PWA)</div>
+          <div class="s-desc">Add DevPath to your home screen for offline access</div>
+        </div>
+        <button class="btn btn-primary" onclick="installPWA()" id="install-btn">Install App</button>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="s-title">Browser Notifications</div>
+          <div class="s-desc">Allow notifications for reminders</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="notif-toggle" onchange="requestNotifications(this)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="s-title">AI Chatbot</div>
+          <div class="s-desc">Powered by Llama 3.3 via Groq</div>
+        </div>
+        <span class="badge badge-green">Active</span>
+      </div>
+    </div>
+
+    <div class="card mb-16">
+      <div class="font-bold mb-12">AI Chatbot Key</div>
+      <div class="form-group">
+        <label>Groq API Key</label>
+        <input type="password" id="groq-key-input" placeholder="gsk_..." value="">
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px">Get your free key at <a href="https://console.groq.com" target="_blank" style="color:var(--primary)">console.groq.com</a>. Stored only in your browser.</div>
+      <button class="btn btn-primary" onclick="saveGroqKey()">Save Key</button>
+      <span id="key-status" style="font-size:.75rem;margin-left:12px;color:var(--success)"></span>
+    </div>
+
+    <div class="card mb-16">
+      <div class="font-bold mb-12">Learning Profile</div>
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="settings-name" placeholder="Sudarsan" value="">
+      </div>
+      <div class="form-group">
+        <label>Daily Study Goal (topics)</label>
+        <input type="number" id="settings-goal" placeholder="3" value="3" min="1" max="10">
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Profile</button>
+    </div>
+
+    <div class="card">
+      <div class="font-bold mb-12">Data Management</div>
+      <div class="flex gap-12">
+        <button class="btn btn-outline" onclick="exportData()">Export Progress</button>
+        <button class="btn btn-danger" onclick="resetProgress()">Reset Progress</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- AI CHATBOT FAB -->
+<button id="chat-fab" onclick="toggleChat()" title="Ask AI">🤖</button>
+
+<!-- AI CHAT PANEL -->
+<div id="chat-panel">
+  <div class="chat-header">
+    <div class="ai-dot"></div>
+    <div>
+      <div class="ai-name">DevPath AI</div>
+      <div class="ai-model">Llama 3.3 · Groq</div>
+    </div>
+    <button class="close-chat" onclick="toggleChat()">✕</button>
+  </div>
+  <div id="chat-messages">
+    <div class="msg ai">👋 Hi! I'm your coding tutor. Ask me anything about JavaScript, React, or TypeScript!</div>
+  </div>
+  <div class="chat-suggestions" id="chat-suggestions">
+    <button onclick="quickAsk('Explain arrow functions')">Arrow Functions</button>
+    <button onclick="quickAsk('What is useState in React?')">useState Hook</button>
+    <button onclick="quickAsk('What is async/await?')">Async/Await</button>
+    <button onclick="quickAsk('What are TypeScript interfaces?')">TS Interfaces</button>
+  </div>
+  <div class="chat-input-row">
+    <textarea id="chat-input" rows="1" placeholder="Ask anything..." onkeydown="chatKeydown(event)"></textarea>
+    <button id="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+let GROQ_API_KEY = localStorage.getItem('groq_api_key') || '';
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
+
+const DAYS = [
+  {
+    id: 1, title: 'JavaScript Core', subtitle: 'Modern JS syntax and fundamentals',
+    topics: ['What is JavaScript', 'JS vs Node.js', 'let & const', 'Arrow Functions', 'Objects', 'Destructuring', 'Spread Operator', 'Import / Export']
+  },
+  {
+    id: 2, title: 'Async JavaScript', subtitle: 'Promises, async/await, and the event loop',
+    topics: ['Synchronous vs Asynchronous', 'Event Loop', 'Callbacks', 'Promises', 'Async / Await', 'Fetch API', 'JSON Handling', 'Error Handling']
+  },
+  {
+    id: 3, title: 'React Fundamentals', subtitle: 'Components, state, and JSX',
+    topics: ['Why React?', 'Create React App', 'JSX Syntax', 'Components', 'Props', 'useState', 'useEffect', 'Virtual DOM']
+  },
+  {
+    id: 4, title: 'React Deep Dive', subtitle: 'Advanced hooks and patterns',
+    topics: ['Conditional Rendering', 'Lists & map()', 'Event Handling', 'Forms in React', 'useRef', 'useContext', 'Custom Hooks', 'React Router']
+  },
+  {
+    id: 5, title: 'TypeScript', subtitle: 'Type-safe JavaScript',
+    topics: ['Why TypeScript?', 'Type Inference', 'Primitive Types', 'Interfaces', 'Type Aliases', 'Generics', 'TSX vs JSX', 'React + TypeScript']
+  }
+];
+
+const NOTES = [
+  { id: 'js', title: 'JavaScript Notes', icon: '⚡', desc: 'ES6+, closures, scope, hoisting', day: 1 },
+  { id: 'async', title: 'Async Programming', icon: '🔄', desc: 'Promises, async/await, event loop', day: 2 },
+  { id: 'react', title: 'React Notes', icon: '⚛️', desc: 'Components, hooks, state management', day: 3 },
+  { id: 'react2', title: 'React Advanced', icon: '🚀', desc: 'Routing, context, custom hooks', day: 4 },
+  { id: 'ts', title: 'TypeScript Notes', icon: '🔷', desc: 'Types, interfaces, generics', day: 5 }
+];
+
+const TOPIC_CONTENT = {
+  'What is JavaScript': `## What is JavaScript?\n\nJavaScript is a lightweight, interpreted programming language primarily used to make web pages interactive.\n\n### Key Facts\n\n- Runs in the **browser** and on servers via **Node.js**\n- Dynamically typed (no need to declare types)\n- Event-driven and single-threaded\n- The only language browsers understand natively\n\n### Your First JS\n\n\`\`\`js\nconsole.log("Hello, World!");\n\`\`\`\n\nThis runs in any browser's developer console (F12).`,
+  'JS vs Node.js': `## JavaScript vs Node.js\n\n| | JavaScript | Node.js |\n|---|---|---|\n| What | Language | Runtime |\n| Runs in | Browser | Server / Terminal |\n| Purpose | UI logic | Backend, scripts |\n\n### Summary\n\n- **JavaScript** = the language itself\n- **Node.js** = environment that lets JS run *outside* the browser\n\n\`\`\`js\n// Runs in both browser and Node.js\nconsole.log("Hello from JS");\n\`\`\``,
+  'let & const': `## let and const\n\nModern JavaScript uses \`let\` and \`const\` instead of \`var\`.\n\n### const — value won't change\n\n\`\`\`js\nconst name = "Sudarsan";\nconst PI = 3.14;\n\`\`\`\n\n### let — value may change\n\n\`\`\`js\nlet count = 0;\ncount = count + 1;\n\`\`\`\n\n### Why not var?\n\n\`var\` has function scope and hoisting issues. \`let\` and \`const\` have **block scope**, which is safer and more predictable.`,
+  'Arrow Functions': `## Arrow Functions\n\nA shorter syntax for writing functions.\n\n### Traditional Function\n\n\`\`\`js\nfunction add(a, b) {\n  return a + b;\n}\n\`\`\`\n\n### Arrow Function\n\n\`\`\`js\nconst add = (a, b) => a + b;\n\`\`\`\n\n### With a body block\n\n\`\`\`js\nconst greet = (name) => {\n  const msg = \`Hello, \${name}!\`;\n  return msg;\n};\n\`\`\`\n\n### Key difference\n\nArrow functions do **not** have their own \`this\`, which makes them ideal for callbacks.`,
+  'Objects': `## Objects in JavaScript\n\nObjects store related data as key-value pairs.\n\n\`\`\`js\nconst user = {\n  name: "Sudarsan",\n  role: "Developer",\n  age: 22\n};\n\`\`\`\n\n### Accessing values\n\n\`\`\`js\nconsole.log(user.name);    // Sudarsan\nconsole.log(user["role"]); // Developer\n\`\`\`\n\n### Adding / updating\n\n\`\`\`js\nuser.city = "Salem";\nuser.age = 23;\n\`\`\``,
+  'Destructuring': `## Destructuring\n\nExtract values from objects and arrays cleanly.\n\n### Object Destructuring\n\n\`\`\`js\nconst user = { name: "Sudarsan", city: "Salem" };\nconst { name, city } = user;\nconsole.log(name); // Sudarsan\n\`\`\`\n\n### Array Destructuring\n\n\`\`\`js\nconst colors = ["red", "green", "blue"];\nconst [first, second] = colors;\nconsole.log(first); // red\n\`\`\`\n\n### In function parameters\n\n\`\`\`js\nfunction greet({ name }) {\n  return \`Hello, \${name}\`;\n}\n\`\`\``,
+  'Spread Operator': `## Spread Operator (...)\n\nExpands an array or object into individual elements.\n\n### Copying an object\n\n\`\`\`js\nconst user = { name: "Sudarsan", role: "Dev" };\nconst updated = { ...user, city: "Salem" };\n\`\`\`\n\n### Merging arrays\n\n\`\`\`js\nconst a = [1, 2];\nconst b = [3, 4];\nconst all = [...a, ...b]; // [1, 2, 3, 4]\n\`\`\`\n\n### Function arguments\n\n\`\`\`js\nconst nums = [5, 10, 15];\nMath.max(...nums); // 15\n\`\`\``,
+  'Import / Export': `## ES Modules: Import & Export\n\n### Named Export\n\n\`\`\`js\n// utils.js\nexport const add = (a, b) => a + b;\nexport const PI = 3.14;\n\`\`\`\n\n### Named Import\n\n\`\`\`js\nimport { add, PI } from "./utils.js";\n\`\`\`\n\n### Default Export\n\n\`\`\`js\n// Home.jsx\nexport default function Home() { ... }\n\`\`\`\n\n### Default Import\n\n\`\`\`js\nimport Home from "./Home";\n\`\`\`\n\nDefault exports don't need curly braces when importing.`,
+  'Synchronous vs Asynchronous': `## Synchronous vs Asynchronous\n\n### Synchronous\n\nCode runs line by line. Each line waits for the previous to finish.\n\n\`\`\`js\nconsole.log("Step 1");\nconsole.log("Step 2");\n// Output: Step 1, then Step 2\n\`\`\`\n\n### Asynchronous\n\nSome operations (network requests, timers) don't block execution.\n\n\`\`\`js\nconsole.log("Start");\nsetTimeout(() => console.log("After 2s"), 2000);\nconsole.log("End");\n// Output: Start → End → After 2s\n\`\`\``,
+  'Event Loop': `## The Event Loop\n\nJavaScript is single-threaded, but handles async via the event loop.\n\n### How it works\n\n1. **Call Stack** — runs synchronous code\n2. **Web APIs** — handles async tasks (setTimeout, fetch)\n3. **Callback Queue** — stores completed async callbacks\n4. **Event Loop** — moves callbacks from queue to stack when stack is empty\n\n\`\`\`js\nconsole.log("1");\nsetTimeout(() => console.log("2"), 0);\nconsole.log("3");\n// Output: 1, 3, 2\n\`\`\`\n\nEven with 0ms delay, setTimeout is async!`,
+  'Promises': `## Promises\n\nA Promise represents a value that will be available in the future.\n\n### States\n- **Pending** — not done yet\n- **Fulfilled** — success\n- **Rejected** — failed\n\n\`\`\`js\nconst p = new Promise((resolve, reject) => {\n  if (success) resolve("Done!");\n  else reject("Error!");\n});\n\np.then(val => console.log(val))\n  .catch(err => console.error(err));\n\`\`\``,
+  'Async / Await': `## Async / Await\n\nSyntactic sugar over Promises — makes async code look synchronous.\n\n\`\`\`js\nasync function loadUser() {\n  try {\n    const res = await fetch("/api/user");\n    const data = await res.json();\n    console.log(data);\n  } catch (err) {\n    console.error(err);\n  }\n}\n\`\`\`\n\n### Rules\n- \`await\` can only be used inside an \`async\` function\n- Always wrap in \`try/catch\` for error handling`,
+  'Fetch API': `## Fetch API\n\nBrowser's built-in way to make HTTP requests.\n\n\`\`\`js\nasync function getPost() {\n  const response = await fetch("https://jsonplaceholder.typicode.com/posts/1");\n  const post = await response.json();\n  console.log(post.title);\n}\n\`\`\`\n\n### POST Request\n\n\`\`\`js\nawait fetch("/api/data", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({ name: "Sudarsan" })\n});\n\`\`\``,
+  'Why React?': `## Why React?\n\n### Problem with vanilla JS\n\nManually updating the DOM is error-prone and hard to scale:\n\n\`\`\`js\ndocument.getElementById("count").innerText = count;\n\`\`\`\n\n### React's Solution\n\nDescribe what the UI *should look like*, and React handles the updates.\n\n\`\`\`jsx\nconst [count, setCount] = useState(0);\nreturn <div>{count}</div>;\n\`\`\`\n\nWhen \`count\` changes, React automatically re-renders only what changed. This is the **Virtual DOM**.`,
+  'JSX Syntax': `## JSX\n\nJavaScript XML — write HTML-like syntax inside JavaScript.\n\n\`\`\`jsx\nfunction Welcome() {\n  const name = "Sudarsan";\n  return (\n    <div>\n      <h1>Hello, {name}!</h1>\n      <p>Welcome to React</p>\n    </div>\n  );\n}\n\`\`\`\n\n### JSX Rules\n- Use \`className\` instead of \`class\`\n- All tags must be closed (\`<img />\`)\n- Return a single parent element (or use \`<></>\`)`,
+  'useState': `## useState Hook\n\nAdds reactive state to a functional component.\n\n\`\`\`jsx\nimport { useState } from "react";\n\nfunction Counter() {\n  const [count, setCount] = useState(0);\n\n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>+1</button>\n    </div>\n  );\n}\n\`\`\`\n\n### Key Points\n- \`count\` — current value\n- \`setCount\` — function to update it\n- Calling \`setCount\` triggers a re-render`,
+  'useEffect': `## useEffect Hook\n\nRuns side effects after render (API calls, subscriptions, timers).\n\n\`\`\`jsx\nimport { useEffect, useState } from "react";\n\nfunction App() {\n  const [data, setData] = useState(null);\n\n  useEffect(() => {\n    fetch("/api/data")\n      .then(res => res.json())\n      .then(d => setData(d));\n  }, []); // [] = run once on mount\n\n  return <div>{data?.name}</div>;\n}\n\`\`\`\n\n### Dependency Array\n- \`[]\` — run once\n- \`[value]\` — run when \`value\` changes\n- No array — run on every render`,
+  'Why TypeScript?': `## Why TypeScript?\n\nTypeScript adds **static types** to JavaScript.\n\n### JavaScript problem\n\n\`\`\`js\nfunction add(a, b) { return a + b; }\nadd("5", 10); // "510" — oops!\n\`\`\`\n\n### TypeScript solution\n\n\`\`\`ts\nfunction add(a: number, b: number): number {\n  return a + b;\n}\nadd("5", 10); // Error caught at compile time!\n\`\`\`\n\n### Benefits\n- Catches bugs before runtime\n- Better IDE autocomplete\n- Self-documenting code`,
+  'Interfaces': `## TypeScript Interfaces\n\nDefines the shape of an object.\n\n\`\`\`ts\ninterface User {\n  name: string;\n  age: number;\n  email?: string; // optional\n}\n\nconst user: User = {\n  name: "Sudarsan",\n  age: 22\n};\n\`\`\`\n\n### Function with interface\n\n\`\`\`ts\nfunction greet(user: User): string {\n  return \`Hello, \${user.name}\`;\n}\n\`\`\``,
+  'Generics': `## TypeScript Generics\n\nReusable components that work with multiple types.\n\n\`\`\`ts\nfunction identity<T>(value: T): T {\n  return value;\n}\n\nidentity<string>("hello"); // "hello"\nidentity<number>(42);     // 42\n\`\`\`\n\n### Generic Array\n\n\`\`\`ts\nfunction first<T>(arr: T[]): T {\n  return arr[0];\n}\n\nfirst<number>([1, 2, 3]); // 1\n\`\`\``
+};
+
+function getDefaultContent(topic) {
+  return `## ${topic}\n\nContent for this topic is loading. Use the AI chatbot to ask for a detailed explanation!\n\n### Quick Summary\n\nClick the 🤖 button below and type:\n\n> "Explain ${topic} in simple terms with a code example"\n\nThe AI will give you a tailored explanation.`;
+}
+
+let state = JSON.parse(localStorage.getItem('devpath_state') || '{}');
+if (!state.completed) state.completed = {};
+if (!state.reminders) state.reminders = [];
+if (!state.streak) state.streak = 0;
+if (!state.lastActive) state.lastActive = null;
+if (!state.daysActive) state.daysActive = 0;
+if (!state.name) state.name = 'Sudarsan';
+if (!state.goal) state.goal = 3;
+
+let currentDay = null;
+let currentTopicIndex = null;
+let chatHistory = [];
+let deferredInstall = null;
+
+function saveState() {
+  localStorage.setItem('devpath_state', JSON.stringify(state));
+}
+
+function updateStreak() {
+  const today = new Date().toDateString();
+  if (state.lastActive === today) return;
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (state.lastActive === yesterday) {
+    state.streak++;
+  } else if (state.lastActive !== today) {
+    state.streak = state.lastActive ? 0 : 1;
+    state.streak = Math.max(1, state.streak);
+  }
+  if (state.lastActive !== today) state.daysActive++;
+  state.lastActive = today;
+  saveState();
+}
+
+function getTotalTopics() {
+  return DAYS.reduce((a, d) => a + d.topics.length, 0);
+}
+
+function getDoneCount() {
+  return Object.values(state.completed).filter(Boolean).length;
+}
+
+function getDayDone(dayId) {
+  const day = DAYS.find(d => d.id === dayId);
+  return day.topics.filter(t => state.completed[`${dayId}_${t}`]).length;
+}
+
+function getDayPct(dayId) {
+  const day = DAYS.find(d => d.id === dayId);
+  return Math.round((getDayDone(dayId) / day.topics.length) * 100);
+}
+
+function getOverallPct() {
+  return Math.round((getDoneCount() / getTotalTopics()) * 100);
+}
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('#sidebar nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === page);
+  });
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'learning') renderLearning();
+  if (page === 'notes') renderNotes();
+  if (page === 'reminders') renderReminders();
+  if (page === 'progress') renderProgress();
+  if (page === 'settings') { loadSettings(); loadGroqKeyInput(); }
+  closeSidebarMobile();
+}
+
+function renderDashboard() {
+  updateStreak();
+  const pct = getOverallPct();
+  const done = getDoneCount();
+  document.getElementById('stat-topics').textContent = done;
+  document.getElementById('stat-pct').textContent = pct + '%';
+  document.getElementById('stat-streak').textContent = state.streak;
+  document.getElementById('stat-days').textContent = state.daysActive;
+  document.getElementById('streak-footer').textContent = `🔥 ${state.streak} day streak`;
+
+  const circ = document.getElementById('ring-circle');
+  const offset = 326.7 - (326.7 * pct / 100);
+  circ.style.strokeDashoffset = offset;
+  document.getElementById('ring-pct').textContent = pct + '%';
+
+  const barsEl = document.getElementById('dash-day-bars');
+  barsEl.innerHTML = DAYS.map(d => {
+    const p = getDayPct(d.id);
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:3px">
+        <span style="color:var(--muted)">Day ${d.id}</span><span style="color:var(--muted)">${p}%</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill ${p===100?'green':''}" style="width:${p}%"></div></div>
+    </div>`;
+  }).join('');
+
+  const activeDayId = DAYS.find(d => getDayPct(d.id) < 100)?.id || 5;
+  const activeDay = DAYS.find(d => d.id === activeDayId);
+  const nextTopic = activeDay?.topics.find(t => !state.completed[`${activeDayId}_${t}`]);
+  document.getElementById('today-topic').textContent = nextTopic || '🎉 All topics done!';
+  document.getElementById('current-day-label').textContent = `Day ${activeDayId}`;
+  document.getElementById('current-day-sub').textContent = activeDay?.title || '';
+
+  const upcoming = state.reminders[0];
+  if (upcoming) {
+    const [h, m] = upcoming.time.split(':');
+    const ampm = +h >= 12 ? 'PM' : 'AM';
+    const h12 = +h % 12 || 12;
+    document.getElementById('next-reminder').textContent = `${h12}:${m} ${ampm}`;
+    document.getElementById('next-reminder-title').textContent = upcoming.title;
+  } else {
+    document.getElementById('next-reminder').textContent = 'No reminders set';
+    document.getElementById('next-reminder-title').textContent = '';
+  }
+}
+
+function renderLearning() {
+  document.getElementById('day-list-view').style.display = '';
+  document.getElementById('topic-detail').style.display = 'none';
+  document.getElementById('topic-detail').classList.remove('active');
+
+  const grid = document.getElementById('day-cards-grid');
+  grid.innerHTML = DAYS.map(d => {
+    const done = getDayDone(d.id);
+    const pct = getDayPct(d.id);
+    const badge = pct === 100 ? '<span class="badge badge-green">Complete</span>' : pct > 0 ? '<span class="badge badge-blue">In Progress</span>' : '';
+    return `<div class="day-card" onclick="openDay(${d.id})">
+      <div class="dc-day">Day ${d.id} ${badge}</div>
+      <div class="dc-title">${d.title}</div>
+      <div class="dc-meta">${d.subtitle}</div>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:4px">
+          <span style="color:var(--muted)">${done}/${d.topics.length} topics</span>
+          <span class="dc-pct">${pct}%</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill ${pct===100?'green':''}" style="width:${pct}%"></div></div>
+      </div>
+      <button class="btn-open">Open →</button>
+    </div>`;
+  }).join('');
+}
+
+function openDay(dayId) {
+  currentDay = dayId;
+  document.getElementById('day-list-view').style.display = 'none';
+  document.getElementById('topic-detail').style.display = 'block';
+  document.getElementById('topic-detail').classList.add('active');
+  document.getElementById('topic-content-view').style.display = 'none';
+  document.getElementById('topic-list-view').style.display = '';
+  renderTopicList();
+}
+
+function renderTopicList() {
+  const day = DAYS.find(d => d.id === currentDay);
+  const done = getDayDone(currentDay);
+  const pct = getDayPct(currentDay);
+  document.getElementById('td-day-badge').textContent = `Day ${currentDay}`;
+  document.getElementById('td-title').textContent = day.title;
+  document.getElementById('td-progress-text').textContent = `${done} of ${day.topics.length} topics completed`;
+  document.getElementById('td-prog-fill').style.width = pct + '%';
+
+  const list = document.getElementById('td-topics-list');
+  list.innerHTML = day.topics.map((t, i) => {
+    const isDone = !!state.completed[`${currentDay}_${t}`];
+    return `<div class="topic-item ${isDone ? 'done' : ''}" onclick="openTopic(${i})">
+      <div class="t-check">${isDone ? '✓' : ''}</div>
+      <div class="t-name">${t}</div>
+      <div class="t-arrow">›</div>
+    </div>`;
+  }).join('');
+}
+
+function openTopic(idx) {
+  currentTopicIndex = idx;
+  const day = DAYS.find(d => d.id === currentDay);
+  const topic = day.topics[idx];
+  const isDone = !!state.completed[`${currentDay}_${topic}`];
+
+  document.getElementById('topic-list-view').style.display = 'none';
+  document.getElementById('topic-content-view').style.display = '';
+  document.getElementById('tc-day-label').textContent = `Day ${currentDay} · ${day.title}`;
+  document.getElementById('tc-topic-name').textContent = topic;
+  document.getElementById('tc-mark-btn').textContent = isDone ? '✓ Completed' : '✓ Mark Complete';
+  document.getElementById('tc-mark-btn').className = `btn ${isDone ? 'btn-success' : 'btn-outline'}`;
+
+  const content = TOPIC_CONTENT[topic] || getDefaultContent(topic);
+  document.getElementById('tc-content').innerHTML = renderMarkdown(content);
+}
+
+function markTopicDone() {
+  const day = DAYS.find(d => d.id === currentDay);
+  const topic = day.topics[currentTopicIndex];
+  const key = `${currentDay}_${topic}`;
+  state.completed[key] = true;
+  saveState();
+  updateStreak();
+  document.getElementById('tc-mark-btn').textContent = '✓ Completed';
+  document.getElementById('tc-mark-btn').className = 'btn btn-success';
+  showToast('Topic marked as complete! 🎉');
+  renderTopicList();
+}
+
+function prevTopic() {
+  if (currentTopicIndex > 0) openTopic(currentTopicIndex - 1);
+}
+
+function nextTopic() {
+  const day = DAYS.find(d => d.id === currentDay);
+  if (currentTopicIndex < day.topics.length - 1) openTopic(currentTopicIndex + 1);
+  else { backToTopics(); showToast('Day complete! 🚀'); }
+}
+
+function backToTopics() {
+  document.getElementById('topic-content-view').style.display = 'none';
+  document.getElementById('topic-list-view').style.display = '';
+  renderTopicList();
+}
+
+function backToDayList() {
+  document.getElementById('day-list-view').style.display = '';
+  document.getElementById('topic-detail').style.display = 'none';
+  document.getElementById('topic-detail').classList.remove('active');
+}
+
+function renderNotes() {
+  document.getElementById('notes-list-view').style.display = '';
+  document.getElementById('notes-detail-view').style.display = 'none';
+  const list = document.getElementById('notes-list');
+  list.innerHTML = NOTES.map(n => {
+    const pct = getDayPct(n.day);
+    return `<div class="note-card" onclick="openNote('${n.id}')">
+      <div class="n-icon">${n.icon}</div>
+      <div style="flex:1">
+        <div class="n-title">${n.title}</div>
+        <div class="n-desc">${n.desc}</div>
+      </div>
+      <span class="badge badge-${pct===100?'green':pct>0?'blue':'warn'}">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+const NOTE_CONTENT = {
+  js: `# JavaScript Notes\n\n## Core Concepts\n\nJavaScript is a **prototype-based**, multi-paradigm, single-threaded language.\n\n## Variable Scope\n\n\`\`\`js\n// Block scope with let/const\n{\n  let x = 10;\n  const y = 20;\n}\n// x and y not accessible here\n\`\`\`\n\n## Closures\n\nA function that remembers its outer scope:\n\n\`\`\`js\nfunction counter() {\n  let count = 0;\n  return () => ++count;\n}\nconst inc = counter();\ninc(); // 1\ninc(); // 2\n\`\`\`\n\n## Hoisting\n\n\`var\` declarations are hoisted (moved to top), \`let\`/\`const\` are not.\n\n\`\`\`js\nconsole.log(a); // undefined (hoisted)\nvar a = 5;\n\nconsole.log(b); // ReferenceError\nlet b = 5;\n\`\`\``,
+  async: `# Async Programming Notes\n\n## The Event Loop\n\nJS is single-threaded but non-blocking via the event loop.\n\n## Promise Chain\n\n\`\`\`js\nfetch("/api/users")\n  .then(res => res.json())\n  .then(users => console.log(users))\n  .catch(err => console.error(err))\n  .finally(() => console.log("Done"));\n\`\`\`\n\n## Async/Await\n\n\`\`\`js\nasync function getUsers() {\n  try {\n    const res = await fetch("/api/users");\n    const users = await res.json();\n    return users;\n  } catch (err) {\n    console.error("Failed:", err);\n  }\n}\n\`\`\`\n\n## Promise.all\n\nRun multiple promises in parallel:\n\n\`\`\`js\nconst [users, posts] = await Promise.all([\n  fetch("/api/users").then(r => r.json()),\n  fetch("/api/posts").then(r => r.json())\n]);\n\`\`\``,
+  react: `# React Notes\n\n## Component Types\n\n\`\`\`jsx\n// Functional (modern)\nfunction Card({ title, desc }) {\n  return (\n    <div className="card">\n      <h2>{title}</h2>\n      <p>{desc}</p>\n    </div>\n  );\n}\n\`\`\`\n\n## State Updates\n\nNever mutate state directly:\n\n\`\`\`jsx\n// Wrong\nstate.items.push(item);\n\n// Correct\nsetItems([...items, item]);\n\`\`\`\n\n## useEffect Patterns\n\n\`\`\`jsx\n// On mount only\nuseEffect(() => { fetchData(); }, []);\n\n// On dependency change\nuseEffect(() => { doSomething(); }, [value]);\n\n// Cleanup\nuseEffect(() => {\n  const sub = subscribe();\n  return () => sub.unsubscribe();\n}, []);\n\`\`\``,
+  react2: `# React Advanced Notes\n\n## useContext\n\n\`\`\`jsx\nconst ThemeContext = createContext("light");\n\nfunction App() {\n  return (\n    <ThemeContext.Provider value="dark">\n      <Child />\n    </ThemeContext.Provider>\n  );\n}\n\nfunction Child() {\n  const theme = useContext(ThemeContext);\n  return <div className={theme}>Hello</div>;\n}\n\`\`\`\n\n## Custom Hook\n\n\`\`\`jsx\nfunction useFetch(url) {\n  const [data, setData] = useState(null);\n  const [loading, setLoading] = useState(true);\n\n  useEffect(() => {\n    fetch(url)\n      .then(r => r.json())\n      .then(d => { setData(d); setLoading(false); });\n  }, [url]);\n\n  return { data, loading };\n}\n\`\`\``,
+  ts: `# TypeScript Notes\n\n## Primitive Types\n\n\`\`\`ts\nlet name: string = "Sudarsan";\nlet age: number = 22;\nlet active: boolean = true;\nlet nothing: null = null;\nlet unknown: undefined = undefined;\n\`\`\`\n\n## Union Types\n\n\`\`\`ts\nlet id: string | number;\nid = "abc";\nid = 123;\n\`\`\`\n\n## Type Alias\n\n\`\`\`ts\ntype Status = "active" | "inactive" | "pending";\n\nfunction update(s: Status) { ... }\n\`\`\`\n\n## React Component with TS\n\n\`\`\`tsx\ninterface ButtonProps {\n  label: string;\n  onClick: () => void;\n  disabled?: boolean;\n}\n\nfunction Button({ label, onClick, disabled }: ButtonProps) {\n  return <button onClick={onClick} disabled={disabled}>{label}</button>;\n}\n\`\`\``
+};
+
+function openNote(id) {
+  const note = NOTES.find(n => n.id === id);
+  document.getElementById('notes-list-view').style.display = 'none';
+  document.getElementById('notes-detail-view').style.display = '';
+  document.getElementById('note-detail-title').textContent = note.title;
+  document.getElementById('note-detail-content').innerHTML = renderMarkdown(NOTE_CONTENT[id] || '# Coming Soon\nThis note is being written...');
+}
+
+function backToNotes() {
+  document.getElementById('notes-list-view').style.display = '';
+  document.getElementById('notes-detail-view').style.display = 'none';
+}
+
+function renderReminders() {
+  const list = document.getElementById('reminders-list');
+  const none = document.getElementById('no-reminders');
+  if (state.reminders.length === 0) { list.innerHTML = ''; none.style.display = ''; return; }
+  none.style.display = 'none';
+  list.innerHTML = state.reminders.map((r, i) => {
+    const [h, m] = r.time.split(':');
+    const ampm = +h >= 12 ? 'PM' : 'AM';
+    const h12 = +h % 12 || 12;
+    return `<div class="reminder-item">
+      <div class="r-time">${h12}:${m} ${ampm}</div>
+      <div><div class="r-title">${r.title}</div><div class="r-repeat">${r.repeat}</div></div>
+      <button class="r-del" onclick="deleteReminder(${i})">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function addReminder() {
+  const title = document.getElementById('rem-title').value.trim();
+  const time = document.getElementById('rem-time').value;
+  const repeat = document.getElementById('rem-repeat').value;
+  if (!title) { showToast('Please enter a reminder title'); return; }
+  state.reminders.push({ title, time, repeat });
+  state.reminders.sort((a, b) => a.time.localeCompare(b.time));
+  saveState();
+  document.getElementById('rem-title').value = '';
+  renderReminders();
+  showToast('Reminder saved! ⏰');
+}
+
+function deleteReminder(i) {
+  state.reminders.splice(i, 1);
+  saveState();
+  renderReminders();
+  showToast('Reminder deleted');
+}
+
+function renderProgress() {
+  const langMap = { 'JavaScript': [1,2], 'React': [3,4], 'TypeScript': [5] };
+  const colors = { 'JavaScript': '#F7DF1E', 'React': '#61DAFB', 'TypeScript': '#3178C6' };
+
+  const barsEl = document.getElementById('lang-progress-bars');
+  barsEl.innerHTML = Object.entries(langMap).map(([lang, dayIds]) => {
+    const allTopics = dayIds.flatMap(id => DAYS.find(d => d.id === id).topics.map(t => `${id}_${t}`));
+    const done = allTopics.filter(k => state.completed[k]).length;
+    const pct = Math.round((done / allTopics.length) * 100);
+    return `<div class="lang-row">
+      <div class="lang-name" style="color:${colors[lang]}">${lang}</div>
+      <div class="lang-bar">
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${colors[lang]}"></div></div>
+      </div>
+      <div class="lang-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('streak-display').textContent = state.streak;
+  document.getElementById('streak-msg').textContent = state.streak > 3 ? `🔥 Keep it up! You're on fire!` : state.streak > 0 ? `Great start! Keep learning daily.` : 'Start learning to build your streak!';
+
+  const dayDetail = document.getElementById('day-progress-detail');
+  dayDetail.innerHTML = DAYS.map(d => {
+    const done = getDayDone(d.id);
+    const pct = getDayPct(d.id);
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+        <span class="text-sm font-bold">Day ${d.id}: ${d.title}</span>
+        <span class="text-xs" style="color:${pct===100?'var(--success)':'var(--muted)'}">${done}/${d.topics.length} · ${pct}%</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill ${pct===100?'green':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function loadSettings() {
+  document.getElementById('settings-name').value = state.name || 'Sudarsan';
+  document.getElementById('settings-goal').value = state.goal || 3;
+}
+
+function saveSettings() {
+  state.name = document.getElementById('settings-name').value;
+  state.goal = parseInt(document.getElementById('settings-goal').value) || 3;
+  saveState();
+  showToast('Settings saved!');
+}
+
+function exportData() {
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'devpath-progress.json';
+  a.click();
+}
+
+function resetProgress() {
+  if (!confirm('Reset all progress? This cannot be undone.')) return;
+  state.completed = {};
+  state.streak = 0;
+  state.daysActive = 0;
+  state.lastActive = null;
+  saveState();
+  showToast('Progress reset');
+  renderDashboard();
+}
+
+function requestNotifications(el) {
+  if (el.checked) {
+    Notification.requestPermission().then(p => {
+      if (p !== 'granted') { el.checked = false; showToast('Notification permission denied'); }
+      else showToast('Notifications enabled! ✅');
+    });
+  }
+}
+
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
+
+function installPWA() {
+  if (deferredInstall) {
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(c => {
+      if (c.outcome === 'accepted') showToast('App installed! 🎉');
+      deferredInstall = null;
+    });
+  } else {
+    showToast('Open in Chrome/Edge and use browser menu → "Add to Home Screen"');
+  }
+}
+
+function toggleChat() {
+  if (!GROQ_API_KEY) {
+    navigate('settings');
+    showToast('Add your Groq API key in Settings first');
+    return;
+  }
+  document.getElementById('chat-panel').classList.toggle('open');
+}
+
+function quickAsk(q) {
+  document.getElementById('chat-input').value = q;
+  sendChat();
+}
+
+function chatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+}
+
+function saveGroqKey() {
+  const key = document.getElementById('groq-key-input').value.trim();
+  if (!key.startsWith('gsk_')) { showToast('Invalid key — must start with gsk_'); return; }
+  GROQ_API_KEY = key;
+  localStorage.setItem('groq_api_key', key);
+  document.getElementById('key-status').textContent = '✓ Saved';
+  showToast('API key saved! 🎉');
+}
+
+function loadGroqKeyInput() {
+  const k = localStorage.getItem('groq_api_key') || '';
+  const el = document.getElementById('groq-key-input');
+  if (el) el.value = k;
+  if (k) document.getElementById('key-status').textContent = '✓ Active';
+}
+
+async function sendChat() {
+  if (!GROQ_API_KEY) {
+    document.getElementById('chat-panel').classList.remove('open');
+    navigate('settings');
+    showToast('Add your Groq API key in Settings first');
+    return;
+  }
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  document.getElementById('chat-suggestions').style.display = 'none';
+
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML += `<div class="msg user">${escHtml(msg)}</div>`;
+  const typing = document.createElement('div');
+  typing.className = 'msg ai typing';
+  typing.textContent = '...';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  chatHistory.push({ role: 'user', content: msg });
+
+  try {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        max_tokens: 600,
+        messages: [
+          { role: 'system', content: 'You are DevPath AI, a concise coding tutor for JavaScript, React, and TypeScript. Give short, clear answers with code examples using markdown code blocks. No lengthy intros.' },
+          ...chatHistory.slice(-8)
+        ]
+      })
+    });
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || 'Sorry, something went wrong.';
+    chatHistory.push({ role: 'assistant', content: reply });
+    typing.className = 'msg ai';
+    typing.innerHTML = renderChatMarkdown(reply);
+  } catch {
+    typing.textContent = 'Network error. Check your connection.';
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderMarkdown(md) {
+  return md
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${escHtml(code.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hupol])/gm, '')
+    .replace(/<\/p><p>/g, '</p><p class="text-muted">');
+}
+
+function renderChatMarkdown(md) {
+  return md
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code>${escHtml(code.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+function closeSidebarMobile() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+updateStreak();
+renderDashboard();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+}
+</script>
+</body>
+</html>
